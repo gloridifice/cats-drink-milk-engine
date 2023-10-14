@@ -1,13 +1,14 @@
 package engine
 
-import engine.event.EngineEvent
+import engine.event.EngineEventCtx
 import engine.io.ModelLoader
-import engine.io.ShaderUniform
-import engine.render.Camera
+import engine.ecs.node.Node
+import engine.ecs.component.Camera
+import engine.ecs.node.root.Root
 import engine.render.Material
 import engine.render.MeshRenderer
-import engine.system.GSystem
-import engine.system.InputSystem
+import engine.ecs.system.GSystem
+import engine.ecs.system.InputSystem
 import glm_.vec4.Vec4
 import gln.glViewport
 import imgui.ConfigFlag
@@ -31,16 +32,22 @@ class Engine {
         val INSTANCE = Engine()
     }
 
-    val camera: Camera
-
     val gAppWindow: GlfwWindow
     val implGlfw: ImplGlfw
     val implGl3: ImplGL3
     val imguiCtx: Context
 
-    val systems = arrayListOf<GSystem>(
-        InputSystem()
-    )
+    private val systems: ArrayList<GSystem>
+    private val nodes: ArrayList<Node>
+    var currentRoot: Root
+
+    fun <T: GSystem> findSystem(type: Class<T>): T?{
+        val ret = systems.find {type.isInstance(it)}
+        ret?.let { return it as T }
+        return null
+    }
+
+
     val meshRenderer: MeshRenderer
 
     init {
@@ -53,7 +60,6 @@ class Engine {
                 profile = Hints.Context.Profile.Core      // 3.2+ only
                 forwardComp = true  // Required on Mac
             }
-
         }
         //init glfw
         val glfwWindow = GlfwWindow(1280, 720, "Cat Drinks Milk")
@@ -80,17 +86,19 @@ class Engine {
         implGlfw = ImplGlfw(gAppWindow, true)
         implGl3 = ImplGL3()
 
-        //engine
-
-        val engineInit = EngineEvent.EngineInit(gAppWindow)
-        systems.forEach { it.init(engineInit) }
+        //init engine
+        val engineInitCtx = EngineEventCtx.Init(gAppWindow)
+        systems = arrayListOf(
+            InputSystem(engineInitCtx)
+        )
+        currentRoot = Root()
+        nodes = arrayListOf()
 
         val meshInstance = ModelLoader.loadModelFile("first.obj")!![0].load()
         meshRenderer = MeshRenderer(
             Material("first", "first", "colormap.png"),
             meshInstance
         )
-        camera = Camera(position = Vector3f(0f, 0f, 5f))
     }
 
     fun run() {
@@ -105,7 +113,7 @@ class Engine {
         }
     }
     private fun logic(){
-
+        systems.forEach { it.logic() }
     }
 
     private fun terminate() {
@@ -122,18 +130,19 @@ class Engine {
     var clearColor = Vec4(0.2f, 0.2f, 0.5f, 1f)
     private fun render() {
         doRender {
-            meshRenderer.render(
-                arrayOf(
-                    ShaderUniform("uViewMatrix", camera.viewMatrix()),
-                    ShaderUniform("uProjMatrix", camera.projectionMatrix())
-                )
-            )
-            with(ImGui){
-                begin("Camera")
-                colorEdit4("Color", clearColor)
-//                ImGuiExpend.vector3Input("position", camera.position)
-                end()
-            }
+            systems.forEach { it.render() }
+//            meshRenderer.render(
+//                arrayOf(
+//                    ShaderUniform("uViewMatrix", camera.viewMatrix()),
+//                    ShaderUniform("uProjMatrix", camera.projectionMatrix())
+//                )
+//            )
+//            with(ImGui){
+//                begin("Camera")
+//                colorEdit4("Color", clearColor)
+////                ImGuiExpend.vector3Input("position", camera.position)
+//                end()
+//            }
         }
     }
 

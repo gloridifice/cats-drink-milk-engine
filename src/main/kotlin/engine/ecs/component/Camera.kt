@@ -1,4 +1,4 @@
-package engine.render
+package engine.ecs.component
 
 import engine.Engine
 import org.joml.Matrix4f
@@ -10,9 +10,9 @@ class Camera(
     val farPlain: Float = 100f,
     val nearPlain: Float = 0.1f,
     val fovy: Float = 270f.toRadians(),
-    val position: Vector3f = Vector3f(),
+    val position: Vector3f = Vector3f(0f,0f,-5f),
     val rotation: Quaternionf = Quaternionf(),
-) {
+) : GComponent(){
 
     fun viewMatrix(): Matrix4f{
         return Matrix4f().translate(position).rotate(rotation).invert()
