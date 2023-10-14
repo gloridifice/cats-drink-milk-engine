@@ -1,10 +1,13 @@
 package engine
 
+import engine.event.EngineEvent
+import engine.io.ModelLoader
 import engine.io.ShaderUniform
 import engine.render.Camera
 import engine.render.Material
 import engine.render.MeshRenderer
-import engine.ui.ImGuiExpend
+import engine.system.GSystem
+import engine.system.InputSystem
 import glm_.vec4.Vec4
 import gln.glViewport
 import imgui.ConfigFlag
@@ -20,15 +23,10 @@ import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL33
 import org.lwjgl.stb.STBImage
 import uno.gl.GlWindow
-import uno.glfw.GlfwWindow
-import uno.glfw.Hints
-import uno.glfw.VSync
-import uno.glfw.glfw
+import uno.glfw.*
 
 
 class Engine {
-    val meshRenderer: MeshRenderer
-
     companion object{
         val INSTANCE = Engine()
     }
@@ -40,6 +38,11 @@ class Engine {
     val implGl3: ImplGL3
     val imguiCtx: Context
 
+    val systems = arrayListOf<GSystem>(
+        InputSystem()
+    )
+    val meshRenderer: MeshRenderer
+
     init {
         glfw {
             init()
@@ -50,11 +53,17 @@ class Engine {
                 profile = Hints.Context.Profile.Core      // 3.2+ only
                 forwardComp = true  // Required on Mac
             }
-        }
 
+        }
         //init glfw
         val glfwWindow = GlfwWindow(1280, 720, "Cat Drinks Milk")
+        glfwWindow.keyCB = { window, key, scanCode, action, mods ->
+            if (key == Key.ESCAPE && action == InputAction.Press){
+                window.shouldClose = true
+            }
+        }
         gAppWindow = GlWindow(glfwWindow)
+
         gAppWindow.makeCurrent()
         glfw.swapInterval = VSync.ON
 
@@ -72,6 +81,10 @@ class Engine {
         implGl3 = ImplGL3()
 
         //engine
+
+        val engineInit = EngineEvent.EngineInit(gAppWindow)
+        systems.forEach { it.init(engineInit) }
+
         val meshInstance = ModelLoader.loadModelFile("first.obj")!![0].load()
         meshRenderer = MeshRenderer(
             Material("first", "first", "colormap.png"),
@@ -87,8 +100,12 @@ class Engine {
 
     private fun loop() {
         gAppWindow.loop {
+            logic()
             render()
         }
+    }
+    private fun logic(){
+
     }
 
     private fun terminate() {

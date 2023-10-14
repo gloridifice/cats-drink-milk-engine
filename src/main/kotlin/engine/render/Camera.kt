@@ -4,7 +4,7 @@ import engine.Engine
 import org.joml.Matrix4f
 import org.joml.Quaternionf
 import org.joml.Vector3f
-import toRadians
+import engine.util.toRadians
 
 class Camera(
     val farPlain: Float = 100f,

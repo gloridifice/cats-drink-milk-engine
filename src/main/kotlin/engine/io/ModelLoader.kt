@@ -1,9 +1,9 @@
-package engine
+package engine.io
 
-import engine.io.Resource
-import engine.io.ResourceType
+import engine.info
 import engine.render.Mesh
 import engine.render.VertexAttribute
+import engine.warn
 import org.lwjgl.assimp.AIMesh
 import org.lwjgl.assimp.Assimp
 

@@ -1,10 +1,10 @@
-package engine.ui
+package engine.util
 
 import com.github.ajalt.mordant.table.horizontalLayout
 import glm_.vec3.Vec3
 import imgui.ImGui
 
-object ImGuiExpend {
+object ImGuiUtils {
     fun vector3Input(label: String, vec3: Vec3){
         with(ImGui){
             val xBuf = floatArrayOf(vec3.x)
